@@ -7,6 +7,7 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.YouTubeScopes;
 import com.google.api.services.youtube.model.Playlist;
@@ -14,6 +15,7 @@ import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.SearchResult;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -22,14 +24,26 @@ import java.util.List;
 
 public class YouTubeHelper {
     private GoogleAccountCredential mCredential;
-    private Context context;
-    private static final String[] SCOPES = { YouTubeScopes.YOUTUBE_READONLY };
     private YouTube mService;
+    private static YouTubeHelper youTubeHelper;
 
-    YouTubeHelper(Context context, GoogleAccountCredential mCredential) {
-        this.context = context;
-        this.mCredential = mCredential;
+
+    private YouTubeHelper(GoogleAccountCredential credential) {
         init();
+        this.mCredential = credential;
+        youTubeHelper = this;
+    }
+
+    public static YouTubeHelper getInstance(GoogleAccountCredential credential) {
+        if(youTubeHelper == null) {
+            return new YouTubeHelper(credential);
+        } else {
+            return youTubeHelper;
+        }
+    }
+
+    public static YouTubeHelper getInstance() {
+        return youTubeHelper;
     }
 
     private void init() {
@@ -64,10 +78,12 @@ public class YouTubeHelper {
         return getPlaylistItemsList("UU1Z7TQ9jXXiX-k3YanWLUUg");
     }
 
-    public List<SearchResult> getVideoListByDate() throws IOException {
-        YouTube.Search.List searchListRequest = mService.search().list("snippet, contentDetails");
+    public SearchResult getRecentVideo() throws IOException {
+        YouTube.Search.List searchListRequest = mService.search().list("snippet");
+        searchListRequest.setChannelId("UC1Z7TQ9jXXiX-k3YanWLUUg");
         searchListRequest.setOrder("date");
-        return searchListRequest.execute().getItems();
+        searchListRequest.setMaxResults(1l);
+        return searchListRequest.execute().getItems().get(0);
     }
 
     public List<PlaylistItem> getLatestVideos() throws IOException {
