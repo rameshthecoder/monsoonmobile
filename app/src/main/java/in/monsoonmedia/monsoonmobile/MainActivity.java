@@ -1,7 +1,6 @@
 package in.monsoonmedia.monsoonmobile;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
@@ -10,7 +9,6 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecovera
 
 import com.google.api.client.util.ExponentialBackOff;
 
-import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.YouTubeScopes;
 
 import com.google.api.services.youtube.model.*;
@@ -23,8 +21,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -36,7 +32,6 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -75,16 +70,18 @@ public class MainActivity extends Activity
         setContentView(R.layout.activity_main);
 
         imageViewThumbnail = (ImageView) findViewById(R.id.imageViewThumbnail);
-        imageViewThumbnail.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
-                intent.putExtra("videoId", recentVideo.getId().getVideoId());
-                intent.putExtra("videoTitle", recentVideo.getSnippet().getTitle());
-                intent.putExtra("videoDescription", recentVideo.getSnippet().getDescription());
-                startActivity(intent);
-            }
-        });
+//        imageViewThumbnail.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if(recentVideo != null) {
+//                    Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
+//                    intent.putExtra("videoId", recentVideo.getId().getVideoId());
+//                    intent.putExtra("videoTitle", recentVideo.getSnippet().getTitle());
+//                    intent.putExtra("videoDescription", recentVideo.getSnippet().getDescription());
+//                    startActivity(intent);
+//                }
+//            }
+//        });
 
         mCallApiButton = (Button) findViewById(R.id.buttonCallApi);
         mCallApiButton.setText(BUTTON_TEXT);
@@ -107,7 +104,7 @@ public class MainActivity extends Activity
        mCredential = GoogleAccountCredential.usingOAuth2(
                 this, Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff());
-       youTubeHelper = youTubeHelper.getInstance(mCredential);
+       youTubeHelper = new YouTubeHelper(mCredential);
     }
 
 
@@ -125,7 +122,7 @@ public class MainActivity extends Activity
             chooseAccount();
         } else if (! isDeviceOnline()) {
         } else {
-            new GetImageTask(MainActivity.this, imageViewThumbnail).execute();
+//            new GetImageTask(MainActivity.this, imageViewThumbnail).execute();
             new MakeRequestTask().execute();
         }
     }
@@ -313,7 +310,7 @@ public class MainActivity extends Activity
      * An asynchronous task that handles the YouTube Data API call.
      * Placing the API calls in their own task ensures the UI stays responsive.
      */
-    private class MakeRequestTask extends AsyncTask<Object, Object, List<Playlist>> {
+    private class MakeRequestTask extends AsyncTask<Object, Object, List<PlaylistItem>> {
         private Exception mLastError = null;
 
 
@@ -322,10 +319,12 @@ public class MainActivity extends Activity
          * @param params no parameters needed for this task.
          */
         @Override
-        protected List<Playlist> doInBackground(Object... params) {
+        protected List<PlaylistItem> doInBackground(Object... params) {
             try {
+                Log.d("Message: ", "Reached onPostExecute()");
                 return getDataFromApi();
             } catch (Exception e) {
+                Log.d("Exception: ", e.getMessage());
                 mLastError = e;
                 cancel(true);
                 return null;
@@ -338,21 +337,16 @@ public class MainActivity extends Activity
         }
 
         @Override
-        protected void onPostExecute(final List<Playlist> playlistsList) {
+        protected void onPostExecute(List<PlaylistItem> playlistItemsList) {
             mProgress.hide();
-            List<String> outputTitles = new ArrayList<String>();
-            for(Playlist item : playlistsList) {
-                outputTitles.add(item.getSnippet().getTitle());
-            }
-            listViewVideos.setAdapter(new PlaylistAdapter(MainActivity.this, R.layout.item_video, playlistsList));
-            listViewVideos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Intent intent = new Intent(MainActivity.this, VideoListActivity.class);
-                    intent.putExtra("playListId", playlistsList.get(position).getId());
-                    startActivity(intent);
-                }
-            });
+            Log.d("Message: ", "Reached onPostExecute()");
+            listViewVideos.setAdapter(new VideoListAdapter(MainActivity.this, R.layout.item_video, playlistItemsList));
+//            listViewVideos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//                @Override
+//                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//
+//                }
+//            });
         }
 
         @Override
@@ -381,38 +375,38 @@ public class MainActivity extends Activity
          * @return List of Strings containing information about the channel.
          * @throws IOException
          */
-        private List<Playlist> getDataFromApi() throws IOException {
-            return youTubeHelper.getPlaylistsList();
+        private List<PlaylistItem> getDataFromApi() throws IOException {
+            return youTubeHelper.getUploadsItemsList();
         }
     }
 
 
-    private class GetImageTask extends AsyncTask<Void, Void, String> {
-
-        Context context;
-        ImageView imageViewThumbnail;
-
-        GetImageTask(Context context, ImageView imageViewThumbnail){
-            this.context = context;
-            this.imageViewThumbnail = imageViewThumbnail;
-        }
-
-        @Override
-        protected String doInBackground(Void... params) {
-            String thumbnailUrl = null;
-            try {
-                recentVideo = youTubeHelper.getRecentVideo();
-                thumbnailUrl = recentVideo.getSnippet().getThumbnails().getHigh().getUrl();
-                Log.d("Thumbnail URL: ", thumbnailUrl);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return thumbnailUrl;
-        }
-
-        @Override
-        protected void onPostExecute(String thumbnailUrl) {
-            Glide.with(context).load(thumbnailUrl).into(imageViewThumbnail);
-        }
-    }
+//    private class GetImageTask extends AsyncTask<Void, Void, String> {
+//
+//        Context context;
+//        ImageView imageViewThumbnail;
+//
+//        GetImageTask(Context context, ImageView imageViewThumbnail){
+//            this.context = context;
+//            this.imageViewThumbnail = imageViewThumbnail;
+//        }
+//
+//        @Override
+//        protected String doInBackground(Void... params) {
+//            String thumbnailUrl = null;
+//            try {
+//                recentVideo = youTubeHelper.getRecentVideo();
+//                thumbnailUrl = recentVideo.getSnippet().getThumbnails().getHigh().getUrl();
+//                Log.d("Thumbnail URL: ", thumbnailUrl);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            return thumbnailUrl;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String thumbnailUrl) {
+//            Glide.with(context).load(thumbnailUrl).into(imageViewThumbnail);
+//        }
+//    }
 }

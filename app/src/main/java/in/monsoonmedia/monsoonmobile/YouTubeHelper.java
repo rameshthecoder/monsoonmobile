@@ -1,21 +1,17 @@
 package in.monsoonmedia.monsoonmobile;
 
-import android.content.Context;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.services.youtube.YouTube;
-import com.google.api.services.youtube.YouTubeScopes;
 import com.google.api.services.youtube.model.Playlist;
 import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.SearchResult;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -25,26 +21,26 @@ import java.util.List;
 public class YouTubeHelper {
     private GoogleAccountCredential mCredential;
     private YouTube mService;
-    private static YouTubeHelper youTubeHelper;
+//    private static YouTubeHelper youTubeHelper;
 
 
-    private YouTubeHelper(GoogleAccountCredential credential) {
+    public YouTubeHelper(GoogleAccountCredential credential) {
         init();
         this.mCredential = credential;
-        youTubeHelper = this;
+//        youTubeHelper = this;
     }
 
-    public static YouTubeHelper getInstance(GoogleAccountCredential credential) {
-        if(youTubeHelper == null) {
-            return new YouTubeHelper(credential);
-        } else {
-            return youTubeHelper;
-        }
-    }
-
-    public static YouTubeHelper getInstance() {
-        return youTubeHelper;
-    }
+//    public static YouTubeHelper getInstance(GoogleAccountCredential credential) {
+//        if(youTubeHelper == null) {
+//            return new YouTubeHelper(credential);
+//        } else {
+//            return youTubeHelper;
+//        }
+//    }
+//
+//    public static YouTubeHelper getInstance() {
+//        return youTubeHelper;
+//    }
 
     private void init() {
         // Initialize credentials and service object.
@@ -61,21 +57,22 @@ public class YouTubeHelper {
     }
 
     public List<PlaylistItem> getPlaylistItemsList(String playlistId) throws IOException {
-        YouTube.PlaylistItems.List playListItemsListRequest = mService.playlistItems().list("snippet, contentDetails");
+        YouTube.PlaylistItems.List playListItemsListRequest = mService.playlistItems().list("snippet");
         playListItemsListRequest.setPlaylistId(playlistId);
         playListItemsListRequest.setMaxResults((long)10);
         return playListItemsListRequest.execute().getItems();
     }
 
     public List<PlaylistItem> getPlaylistItemsList(String playlistId, long maxResults) throws IOException {
-        YouTube.PlaylistItems.List playListItemsListRequest = mService.playlistItems().list("snippet, contentDetails");
+        YouTube.PlaylistItems.List playListItemsListRequest = mService.playlistItems().list("snippet");
         playListItemsListRequest.setPlaylistId(playlistId);
         playListItemsListRequest.setMaxResults(maxResults);
         return playListItemsListRequest.execute().getItems();
     }
 
     public List<PlaylistItem> getUploadsItemsList() throws IOException {
-        return getPlaylistItemsList("UU1Z7TQ9jXXiX-k3YanWLUUg");
+//        return getPlaylistItemsList("PLJvP8jNh41cgNyKbY43DrwERzCJeDZwtB", 5l);
+        return getPlaylistItemsList("UU1Z7TQ9jXXiX-k3YanWLUUg", 5l);
     }
 
     public SearchResult getRecentVideo() throws IOException {
@@ -91,7 +88,7 @@ public class YouTubeHelper {
     }
 
     public List<Playlist> getPlaylistsList() throws IOException {
-        YouTube.Playlists.List playlistsListRequest = mService.playlists().list("snippet, contentDetails");
+        YouTube.Playlists.List playlistsListRequest = mService.playlists().list("snippet");
         playlistsListRequest.setChannelId("UC1Z7TQ9jXXiX-k3YanWLUUg");
         playlistsListRequest.setMaxResults((long)10);
         return playlistsListRequest.execute().getItems();

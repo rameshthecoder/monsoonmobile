@@ -1,7 +1,6 @@
 package in.monsoonmedia.monsoonmobile;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -39,7 +38,7 @@ public class VideoListAdapter extends ArrayAdapter {
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         if(convertView == null) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = inflater.inflate(resource, parent, false);
+            convertView = inflater.inflate(R.layout.item_video, parent, false);
         }
 
         ImageView imageViewThumbnail = (ImageView) convertView.findViewById(R.id.imageViewThumbnail);
