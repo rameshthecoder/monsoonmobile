@@ -1,21 +1,7 @@
 package in.monsoonmedia.monsoonmobile;
 
-import com.bumptech.glide.Glide;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
-
-import com.google.api.client.util.ExponentialBackOff;
-
-import com.google.api.services.youtube.YouTubeScopes;
-
-import com.google.api.services.youtube.model.*;
-
 import android.Manifest;
 import android.accounts.AccountManager;
-import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -26,12 +12,34 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Toast;
+
+import com.bumptech.glide.Glide;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.youtube.player.YouTubeBaseActivity;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.services.youtube.YouTubeScopes;
+import com.google.api.services.youtube.model.Playlist;
+import com.google.api.services.youtube.model.PlaylistItem;
+import com.google.api.services.youtube.model.SearchResult;
+import com.google.api.services.youtube.model.Video;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,12 +49,13 @@ import java.util.List;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
-public class MainActivity extends Activity
-        implements EasyPermissions.PermissionCallbacks {
+public class MainActivity extends FragmentActivity
+        implements EasyPermissions.PermissionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+    private static final int RC_SIGN_IN = 123;
     GoogleAccountCredential mCredential;
     private Button mCallApiButton;
     ProgressDialog mProgress;
-    ListView listViewVideos;
+    ListView listViewCategories;
 
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
@@ -55,13 +64,20 @@ public class MainActivity extends Activity
 
     private static final String BUTTON_TEXT = "Call YouTube Data API";
     private static final String PREF_ACCOUNT_NAME = "accountName";
-    private static final String[] SCOPES = { YouTubeScopes.YOUTUBE_READONLY };
+    private static final String[] SCOPES = {YouTubeScopes.YOUTUBE};
     private YouTubeHelper youTubeHelper;
-    private ImageView imageViewThumbnail;
     private SearchResult recentVideo;
+    private List<Playlist> categoryPlaylistsList;
+    ProgressDialog progressDialog;
+    ViewPager viewPagerContent;
+    VideoPageAdapter videoPageAdapter;
+    List<Video> videosList;
+    GridView gridViewCategories;
+    private GoogleApiClient googleApiClient;
 
     /**
      * Create the main activity.
+     *
      * @param savedInstanceState previously saved instance data.
      */
     @Override
@@ -69,42 +85,86 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        imageViewThumbnail = (ImageView) findViewById(R.id.imageViewThumbnail);
-//        imageViewThumbnail.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                if(recentVideo != null) {
-//                    Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
-//                    intent.putExtra("videoId", recentVideo.getId().getVideoId());
-//                    intent.putExtra("videoTitle", recentVideo.getSnippet().getTitle());
-//                    intent.putExtra("videoDescription", recentVideo.getSnippet().getDescription());
-//                    startActivity(intent);
-//                }
-//            }
-//        });
-
-        mCallApiButton = (Button) findViewById(R.id.buttonCallApi);
-        mCallApiButton.setText(BUTTON_TEXT);
-        mCallApiButton.setOnClickListener(new View.OnClickListener() {
+//        listViewCategories = (ListView) findViewById(R.id.listViewCategories);
+        gridViewCategories = (GridView) findViewById(R.id.gridViewCategories);
+        viewPagerContent = (ViewPager) findViewById(R.id.viewPagerContent);
+        viewPagerContent.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
-            public void onClick(View v) {
-                mCallApiButton.setEnabled(false);
-                getResultsFromApi();
-                mCallApiButton.setEnabled(true);
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
             }
         });
+
+//        mCallApiButton = (Button) findViewById(R.id.buttonCallApi);
+//        mCallApiButton.setText(BUTTON_TEXT);
+//        mCallApiButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mCallApiButton.setEnabled(false);
+//                getResultsFromApi();
+//                mCallApiButton.setEnabled(true);
+//            }
+//        });
+        init();
+        signIn();
+//        new GetThumbnailListTask().execute();
         mProgress = new ProgressDialog(this);
         mProgress.setMessage("Calling YouTube Data API ...");
-        listViewVideos = (ListView) findViewById(R.id.videoList);
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        getResultsFromApi();
+//        listViewVideos = (ListView) findViewById(R.id.videoList);
 
-        init();
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    private class GetThumbnailListTask extends AsyncTask {
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+            try {
+                categoryPlaylistsList = youTubeHelper.getCategoryPlayListsList();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            gridViewCategories.setAdapter(new CategoryListAdapter(MainActivity.this, R.layout.item_category, categoryPlaylistsList));
+        }
     }
 
     private void init() {
-       mCredential = GoogleAccountCredential.usingOAuth2(
+        mCredential = GoogleAccountCredential.usingOAuth2(
                 this, Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff());
-       youTubeHelper = new YouTubeHelper(mCredential);
+//        youTubeHelper = YouTubeHelper.getInstance(mCredential);
+
+        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().requestScopes(new Scope("https://www.googleapis.com/auth/youtube")).build();
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                .addApi(Auth.GOOGLE_SIGN_IN_API, googleSignInOptions)
+                .build();
+    }
+
+    private void signIn() {
+        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient);
+        startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
 
@@ -116,14 +176,14 @@ public class MainActivity extends Activity
      * appropriate.
      */
     private void getResultsFromApi() {
-        if (! isGooglePlayServicesAvailable()) {
+        if (!isGooglePlayServicesAvailable()) {
             acquireGooglePlayServices();
         } else if (mCredential.getSelectedAccountName() == null) {
             chooseAccount();
-        } else if (! isDeviceOnline()) {
+        } else if (!isDeviceOnline()) {
         } else {
-//            new GetImageTask(MainActivity.this, imageViewThumbnail).execute();
-            new MakeRequestTask().execute();
+//            new MakeRequestTask().execute();
+//            new GetVideosListTask().execute();
         }
     }
 
@@ -166,21 +226,22 @@ public class MainActivity extends Activity
      * Called when an activity launched here (specifically, AccountPicker
      * and authorization) exits, giving you the requestCode you started it with,
      * the resultCode it returned, and any additional data from it.
+     *
      * @param requestCode code indicating which activity result is incoming.
-     * @param resultCode code indicating the result of the incoming
-     *     activity result.
-     * @param data Intent (containing result data) returned by incoming
-     *     activity result.
+     * @param resultCode  code indicating the result of the incoming
+     *                    activity result.
+     * @param data        Intent (containing result data) returned by incoming
+     *                    activity result.
      */
     @Override
     protected void onActivityResult(
             int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch(requestCode) {
+        switch (requestCode) {
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
 //                    mOutputText.setText(
-//                            "This app requires Google Play Services. Please install " +
+//                         int   "This app requires Google Play Services. Please install " +
 //                                    "Google Play Services on your device and relaunch this app.");
                 } else {
                     getResultsFromApi();
@@ -207,16 +268,31 @@ public class MainActivity extends Activity
                     getResultsFromApi();
                 }
                 break;
+
+            case RC_SIGN_IN:
+                GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+                if (result.isSuccess()) {
+                    Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show();
+                    GoogleSignInAccount googleSignInAccount = result.getSignInAccount();
+                    mCredential.setSelectedAccount(googleSignInAccount.getAccount());
+                    youTubeHelper = YouTubeHelper.getInstance(mCredential);
+
+                    new GetThumbnailListTask().execute();
+                    new GetVideosListTask().execute();
+                }
+
+
         }
     }
 
     /**
      * Respond to requests for permissions at runtime for API 23 and above.
-     * @param requestCode The request code passed in
-     *     requestPermissions(android.app.Activity, String, int, String[])
-     * @param permissions The requested permissions. Never null.
+     *
+     * @param requestCode  The request code passed in
+     *                     requestPermissions(android.app.Activity, String, int, String[])
+     * @param permissions  The requested permissions. Never null.
      * @param grantResults The grant results for the corresponding permissions
-     *     which is either PERMISSION_GRANTED or PERMISSION_DENIED. Never null.
+     *                     which is either PERMISSION_GRANTED or PERMISSION_DENIED. Never null.
      */
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -230,9 +306,10 @@ public class MainActivity extends Activity
     /**
      * Callback for when a permission is granted using the EasyPermissions
      * library.
+     *
      * @param requestCode The request code associated with the requested
-     *         permission
-     * @param list The requested permission list. Never null.
+     *                    permission
+     * @param list        The requested permission list. Never null.
      */
     @Override
     public void onPermissionsGranted(int requestCode, List<String> list) {
@@ -242,9 +319,10 @@ public class MainActivity extends Activity
     /**
      * Callback for when a permission is denied using the EasyPermissions
      * library.
+     *
      * @param requestCode The request code associated with the requested
-     *         permission
-     * @param list The requested permission list. Never null.
+     *                    permission
+     * @param list        The requested permission list. Never null.
      */
     @Override
     public void onPermissionsDenied(int requestCode, List<String> list) {
@@ -253,6 +331,7 @@ public class MainActivity extends Activity
 
     /**
      * Checks whether the device currently has a network connection.
+     *
      * @return true if the device has a network connection, false otherwise.
      */
     private boolean isDeviceOnline() {
@@ -264,8 +343,9 @@ public class MainActivity extends Activity
 
     /**
      * Check that Google Play services APK is installed and up to date.
+     *
      * @return true if Google Play Services is available and up to
-     *     date on this device; false otherwise.
+     * date on this device; false otherwise.
      */
     private boolean isGooglePlayServicesAvailable() {
         GoogleApiAvailability apiAvailability =
@@ -293,8 +373,9 @@ public class MainActivity extends Activity
     /**
      * Display an error dialog showing that Google Play Services is missing
      * or out of date.
+     *
      * @param connectionStatusCode code describing the presence (or lack of)
-     *     Google Play Services on this device.
+     *                             Google Play Services on this device.
      */
     void showGooglePlayServicesAvailabilityErrorDialog(
             final int connectionStatusCode) {
@@ -304,6 +385,29 @@ public class MainActivity extends Activity
                 connectionStatusCode,
                 REQUEST_GOOGLE_PLAY_SERVICES);
         dialog.show();
+    }
+
+
+    public class GetVideosListTask extends AsyncTask<Void, Void, List<Video>> {
+
+        @Override
+        protected List<Video> doInBackground(Void... params) {
+//            videosList = null;
+            try {
+                videosList = youTubeHelper.getVideosList();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return videosList;
+        }
+
+        @Override
+        protected void onPostExecute(List<Video> videosList) {
+            super.onPostExecute(videosList);
+            videoPageAdapter = new VideoPageAdapter(getFragmentManager(), videosList);
+            Toast.makeText(MainActivity.this, "Size: " + videosList.size(), Toast.LENGTH_SHORT).show();
+            viewPagerContent.setAdapter(videoPageAdapter);
+        }
     }
 
     /**
@@ -316,6 +420,7 @@ public class MainActivity extends Activity
 
         /**
          * Background task to call YouTube Data API.
+         *
          * @param params no parameters needed for this task.
          */
         @Override
@@ -339,14 +444,6 @@ public class MainActivity extends Activity
         @Override
         protected void onPostExecute(List<PlaylistItem> playlistItemsList) {
             mProgress.hide();
-            Log.d("Message: ", "Reached onPostExecute()");
-            listViewVideos.setAdapter(new VideoListAdapter(MainActivity.this, R.layout.item_video, playlistItemsList));
-//            listViewVideos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//                @Override
-//                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//
-//                }
-//            });
         }
 
         @Override
@@ -372,41 +469,13 @@ public class MainActivity extends Activity
 
         /**
          * Fetch information about the "GoogleDevelopers" YouTube channel.
+         *
          * @return List of Strings containing information about the channel.
          * @throws IOException
          */
         private List<PlaylistItem> getDataFromApi() throws IOException {
-            return youTubeHelper.getUploadsItemsList();
+//            return youTubeHelper.getUploadsItemsList();
+            return null;
         }
     }
-
-
-//    private class GetImageTask extends AsyncTask<Void, Void, String> {
-//
-//        Context context;
-//        ImageView imageViewThumbnail;
-//
-//        GetImageTask(Context context, ImageView imageViewThumbnail){
-//            this.context = context;
-//            this.imageViewThumbnail = imageViewThumbnail;
-//        }
-//
-//        @Override
-//        protected String doInBackground(Void... params) {
-//            String thumbnailUrl = null;
-//            try {
-//                recentVideo = youTubeHelper.getRecentVideo();
-//                thumbnailUrl = recentVideo.getSnippet().getThumbnails().getHigh().getUrl();
-//                Log.d("Thumbnail URL: ", thumbnailUrl);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//            return thumbnailUrl;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(String thumbnailUrl) {
-//            Glide.with(context).load(thumbnailUrl).into(imageViewThumbnail);
-//        }
-//    }
 }

@@ -1,66 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
-    <LinearLayout
-        android:id="@+id/currentLocation"
-        android:layout_width="match_parent"
-        android:layout_height="20dp"
-        android:layout_alignParentTop="true"
-        android:background="#990099"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/textViewLocation"
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:ems="10"
-            android:gravity="center_vertical"
-            android:padding="2dp"
-            android:text="HOME"
-            android:textColor="#ae8ea6" />
-
-
-        <ImageView
-            android:id="@+id/imageView2"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:gravity="end"
-            android:scaleType="fitEnd"
-            android:src="@drawable/header_url" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/header"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_below="@id/currentLocation">
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <ImageView
-                android:id="@+id/imageView3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:src="@drawable/header_graphic" />
-
-            <ImageView
-                android:id="@+id/imageView4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:src="@drawable/header_icon" />
-
-        </FrameLayout>
-    </LinearLayout>
-
-
     <ScrollView
-        android:layout_below="@id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -78,11 +22,27 @@
                 android:textColor="#660066"
                 android:textSize="20sp" />
 
-            <com.google.android.youtube.player.YouTubePlayerView
-                android:id="@+id/youtube_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/textViewTitle"></com.google.android.youtube.player.YouTubePlayerView>
+            <ImageView
+            android:id="@+id/imageViewThumbnail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+            <!--<FrameLayout-->
+            <!--android:id="@+id/frame_fragment"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content" />-->
+
+         <!--<com.google.android.youtube.player.YouTubePlayerView-->
+                    <!--android:id="@+id/youtube_view"-->
+                    <!--android:layout_width="match_parent"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_margin="0dp"-->
+                    <!--android:padding="0dp" />-->
+            <!--<fragment-->
+            <!--android:id="@+id/youtube_fragment"-->
+            <!--android:name="com.google.android.youtube.player.YouTubePlayerSupportFragment"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"/>-->
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -96,11 +56,10 @@
                     android:layout_margin="2dp"
                     android:layout_weight="2">
 
-                    <ImageButton
-                        android:id="@+id/imageButtonShare"
-                        android:background="@drawable/icon_share"
+                    <ImageView
                         android:layout_width="40dp"
-                        android:layout_height="40dp"/>
+                        android:layout_height="40dp"
+                        android:src="@drawable/icon_share" />
                 </LinearLayout>
 
                 <FrameLayout
@@ -119,11 +78,10 @@
                         android:textColor="#000000"
                         android:textSize="15sp" />
 
-                    <ImageButton
-                        android:id="@+id/imageButtonLike"
-                        android:background="@drawable/icon_like_inactive"
+                    <ImageView
                         android:layout_width="94.3dp"
-                        android:layout_height="40dp"/>
+                        android:layout_height="40dp"
+                        android:src="@drawable/icon_like_inactive" />
                 </FrameLayout>
 
                 <FrameLayout
@@ -142,12 +100,13 @@
                         android:textColor="#000000"
                         android:textSize="15sp" />
 
-                    <ImageButton
-                        android:id="@+id/imageButtonDislike"
-                        android:background="@drawable/icon_dislike_inactive"
+                    <ImageView
                         android:layout_width="94.3dp"
-                        android:layout_height="40dp"/>
+                        android:layout_height="40dp"
+                        android:src="@drawable/icon_dislike_inactive" />
                 </FrameLayout>
+
+
             </LinearLayout>
 
             <TextView
@@ -159,11 +118,11 @@
                 android:textColor="#660066"
                 android:textSize="15sp" />
 
-            <ImageView
-                android:id="@+id/footer"
-                android:layout_width="match_parent"
-                android:layout_height="133.3dp"
-                android:src="@drawable/bg_footer" />
+            <!--<ImageView-->
+                <!--android:id="@+id/footer"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="133.3dp"-->
+                <!--android:src="@drawable/bg_footer" />-->
         </LinearLayout>
     </ScrollView>
-</RelativeLayout>
+</LinearLayout>

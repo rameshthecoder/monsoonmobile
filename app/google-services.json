@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "418285204811",
+    "project_id": "monsoonmobile-177507"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:418285204811:android:41746222cc3c75c9",
+        "android_client_info": {
+          "package_name": "in.monsoonmedia.monsoonmobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "418285204811-idpv7n1hpparfjjhd82ft4cm4mkhkko2.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "418285204811-ntghe83v2qvqi8ub2l16ib4eco8poppg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.monsoonmedia.monsoonmobile",
+            "certificate_hash": "ff4961bd049366690afdfa648243736385434ec2"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDi8r4eh69oRAqpeh1Yrw7pT1Lp9sUtQr4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

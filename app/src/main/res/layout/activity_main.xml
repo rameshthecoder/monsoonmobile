@@ -1,24 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_height="match_parent"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:orientation="vertical">
+    <!--android:background="#990099"-->
 
-    <Button
-        android:id="@+id/buttonCallApi"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"/>
-
-    <ImageView
-        android:id="@+id/imageViewThumbnail"
-        android:layout_weight="3"
+    <LinearLayout
+        android:id="@+id/currentLocation"
         android:layout_width="match_parent"
-        android:layout_height="0dp" />
+        android:layout_height="20dp"
+        android:layout_alignParentTop="true"
+        android:background="#990099"
+        android:orientation="horizontal">
 
-    <ListView
-        android:id="@+id/videoList"
-        android:layout_weight="3"
+        <TextView
+            android:id="@+id/textViewLocation"
+            android:layout_width="100dp"
+            android:layout_height="match_parent"
+            android:ems="10"
+            android:gravity="center_vertical"
+            android:padding="2dp"
+            android:text="HOME"
+            android:textColor="#ae8ea6" />
+
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="end"
+            android:scaleType="fitEnd"
+            android:src="@drawable/header_url" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="0dp"/>
-</LinearLayout>
+        android:layout_height="50dp"
+        android:layout_below="@id/currentLocation">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/imageView3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:src="@drawable/header_graphic" />
+
+            <ImageView
+                android:id="@+id/imageView4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:src="@drawable/header_icon" />
+
+        </FrameLayout>
+    </LinearLayout>
+
+    <android.support.v4.view.ViewPager
+        android:layout_below="@id/header"
+        android:id="@+id/viewPagerContent"
+        android:layout_width="match_parent"
+        android:layout_height="400dp" />
+
+    <GridView
+        android:id="@+id/gridViewCategories"
+        android:layout_below="@id/viewPagerContent"
+        android:numColumns="2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
+    <!--<ImageView-->
+        <!--android:layout_below="@id/gridViewCategories"-->
+        <!--android:id="@+id/footer"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="133.3dp"-->
+        <!--android:src="@drawable/bg_footer" />-->
+
+    <!--android:layout_height="133.3dp"-->
+        <!--<ListView-->
+            <!--android:layout_below="@id/viewPagerContent"-->
+            <!--android:layout_alignParentBottom="true"-->
+            <!--android:id="@+id/listViewCategories"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content" />-->
+
+</RelativeLayout>
