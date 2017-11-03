@@ -42,6 +42,7 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <ImageView
                 android:id="@+id/imageView3"
                 android:layout_width="match_parent"
@@ -57,34 +58,56 @@
         </FrameLayout>
     </LinearLayout>
 
-    <android.support.v4.view.ViewPager
+    <ScrollView
+        android:layout_alignParentBottom="true"
         android:layout_below="@id/header"
-        android:id="@+id/viewPagerContent"
         android:layout_width="match_parent"
-        android:layout_height="400dp" />
+        android:layout_height="match_parent">
 
-    <GridView
-        android:id="@+id/gridViewCategories"
-        android:layout_below="@id/viewPagerContent"
-        android:numColumns="2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
+            <android.support.v4.view.ViewPager
+                android:id="@+id/viewPagerContent"
+                android:layout_width="match_parent"
+                android:layout_height="450dp" />
+
+            <in.monsoonmedia.monsoonmobile.GridViewScrollable
+                android:id="@+id/gridViewCategories"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:numColumns="2" />
+
+            <TextView
+                android:layout_marginLeft="10dp"
+                android:text="TRENDING VIDEOS"
+                android:textColor="#990099"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <ListView
+                android:id="@+id/listViewTrendingVideos"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+        </LinearLayout>
+    </ScrollView>
 
     <!--<ImageView-->
-        <!--android:layout_below="@id/gridViewCategories"-->
-        <!--android:id="@+id/footer"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="133.3dp"-->
-        <!--android:src="@drawable/bg_footer" />-->
+    <!--android:layout_below="@id/gridViewCategories"-->
+    <!--android:id="@+id/footer"-->
+    <!--android:layout_alignParentBottom="true"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="133.3dp"-->
+    <!--android:src="@drawable/bg_footer" />-->
 
     <!--android:layout_height="133.3dp"-->
-        <!--<ListView-->
-            <!--android:layout_below="@id/viewPagerContent"-->
-            <!--android:layout_alignParentBottom="true"-->
-            <!--android:id="@+id/listViewCategories"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content" />-->
+    <!--<ListView-->
+    <!--android:layout_below="@id/viewPagerContent"-->
+    <!--android:layout_alignParentBottom="true"-->
+    <!--android:id="@+id/listViewCategories"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content" />-->
 
 </RelativeLayout>

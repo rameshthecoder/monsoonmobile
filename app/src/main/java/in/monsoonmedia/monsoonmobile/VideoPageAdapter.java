@@ -7,8 +7,11 @@ package in.monsoonmedia.monsoonmobile;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.view.View;
 
 
+import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.Video;
 
 import java.util.List;
@@ -20,21 +23,23 @@ import java.util.List;
 public class VideoPageAdapter extends android.support.v13.app.FragmentPagerAdapter {
 
 
-    private List<Video> videosList;
+    private List<PlaylistItem> playlistItemsList;
+    private ViewPager viewPager;
 
-    public VideoPageAdapter(FragmentManager fm, List<Video> videosList) {
+    public VideoPageAdapter(FragmentManager fm, List<PlaylistItem> playlistItemsList, ViewPager viewPager) {
         super(fm);
-        this.videosList = videosList;
+        this.playlistItemsList = playlistItemsList;
+        this.viewPager = viewPager;
     }
 
     @Override
     public Fragment getItem(int position) {
-        ContentFragment contentFragment = ContentFragment.getInstance(videosList.get(position));
+        ContentFragment contentFragment = ContentFragment.getInstance(playlistItemsList.get(position), viewPager);
         return contentFragment;
     }
 
     @Override
     public int getCount() {
-        return videosList.size();
+        return playlistItemsList.size();
     }
 }

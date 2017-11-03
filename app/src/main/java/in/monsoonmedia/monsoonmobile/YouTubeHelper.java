@@ -3,25 +3,23 @@ package in.monsoonmedia.monsoonmobile;
 
 import android.util.Log;
 
-import com.google.android.gms.auth.api.Auth;
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.repackaged.com.google.common.base.Strings;
-import com.google.api.client.repackaged.org.apache.commons.codec.binary.StringUtils;
-import com.google.api.client.util.Lists;
+import com.google.api.client.util.DateTime;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Playlist;
 import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.SearchResult;
 import com.google.api.services.youtube.model.Video;
-import com.google.api.services.youtube.model.VideoListResponse;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,6 +30,9 @@ import java.util.List;
 public class YouTubeHelper {
     private GoogleAccountCredential mCredential;
     private YouTube mService;
+    public static final int MAX_RESULTS = 10;
+    public static final String UPLOADS = "UUKLN9wGq6WfD2JgJk6P7ODQ";
+    private static final String TRENDING = "PLngLkrCDoLukOOjr5bzs_u7Z8IkQYd5td";
     private static final String API_KEY = "AIzaSyAhPbII6mdo79M69BEeI69yD0gW2tiI9CY";
     private static final String ID_MOVIES = "PLngLkrCDoLumAsvgjK1Bw8rTaMMGiGTDV";
     private static final String ID_ART_AND_LITERATURE = "PLngLkrCDoLukezJ8sOMqOFHKbP5ik6cqp";
@@ -76,20 +77,36 @@ public class YouTubeHelper {
                 .build();
     }
 
-    public List<Playlist> getCategoryPlayListsList() throws IOException {
+    public List<Playlist> getCategoryPlaylistsList() throws IOException {
         ArrayList<String> playlistIdsList = new ArrayList<String>();
-        playlistIdsList.add(ID_MOVIES);
-        playlistIdsList.add(ID_ART_AND_LITERATURE);
-        playlistIdsList.add(ID_INTERVIEWS);
-        playlistIdsList.add(ID_LIFE_AND_GUIDANCE);
-        playlistIdsList.add(ID_TALK_SERIOUS);
-        playlistIdsList.add(ID_TRAVEL_FOOD_AND_FUN);
+        playlistIdsList.add(0, ID_MOVIES);
+        playlistIdsList.add(1, ID_ART_AND_LITERATURE);
+        playlistIdsList.add(2, ID_INTERVIEWS);
+        playlistIdsList.add(3, ID_LIFE_AND_GUIDANCE);
+        playlistIdsList.add(4, ID_TALK_SERIOUS);
+        playlistIdsList.add(5, ID_TRAVEL_FOOD_AND_FUN);
 
         YouTube.Playlists.List playlistListRequest = mService.playlists().list("snippet");
         playlistListRequest.setKey(API_KEY);
         String playlistIds = org.apache.commons.lang3.StringUtils.join(playlistIdsList.toArray(), ",");
         playlistListRequest.setId(playlistIds);
         return playlistListRequest.execute().getItems();
+    }
+
+    public List<Video> getCategoryVideosList(String categoryPlaylistId) throws IOException {
+        List<PlaylistItem> playlistItemsList = getPlaylistItemsList(categoryPlaylistId);
+        ArrayList<String> categoryVideoIdsList = new ArrayList<String>();
+        for(PlaylistItem playlistItem : playlistItemsList) {
+            categoryVideoIdsList.add(playlistItem.getSnippet().getResourceId().getVideoId());
+        }
+
+        YouTube.Videos.List videosListRequest = mService.videos().list("snippet,contentDetails,statistics");
+        String categoryVideoIds = org.apache.commons.lang3.StringUtils.join(categoryVideoIdsList, ",");
+        videosListRequest.setKey(API_KEY);
+        videosListRequest.setId(categoryVideoIds);
+        List<Video> categoryVideosList = videosListRequest.execute().getItems();
+        Log.d("Ids: ", "" + categoryVideoIds);
+        return categoryVideosList;
     }
 //
 //    public String getPlaylistThumbnailUrl(String playlistId) throws IOException {
@@ -110,13 +127,32 @@ public class YouTubeHelper {
 
     public HashMap<String, String> getCounts(String videoId) throws IOException {
         HashMap<String, String> counts = new HashMap<String, String>();
-        YouTube.Videos.List videoListRequest = mService.videos().list("snippet");
+        YouTube.Videos.List videoListRequest = mService.videos().list("snippet, statistics");
+        videoListRequest.setKey(API_KEY);
         videoListRequest.setId(videoId);
         Video item = videoListRequest.execute().getItems().get(0);
         String likeCount = item.getStatistics().getLikeCount().toString();
         String dislikeCount = item.getStatistics().getDislikeCount().toString();
+        String viewCount = item.getStatistics().getViewCount().toString();
+        DateTime dateTimePublishedAt = item.getSnippet().getPublishedAt();
+
+
+        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd, yyyy");
+        String dateString = dateTimePublishedAt.toString().substring(0, 10);
+        Date date = null;
+        String publishedAt = null;
+        try {
+            date = inputFormat.parse(dateString);
+            publishedAt = outputFormat.format(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
         counts.put("likeCount", likeCount);
         counts.put("dislikeCount", dislikeCount);
+        counts.put("viewCount", viewCount);
+        counts.put("publishedAt", publishedAt);
         return counts;
     }
 
@@ -145,7 +181,17 @@ public class YouTubeHelper {
 
     public List<Video> getVideosList() throws IOException {
         YouTube.Videos.List videosListRequest = mService.videos().list("snippet,contentDetails,statistics");
-        ArrayList<String> videoIDsList = getVideoIDsList();
+        ArrayList<String> videoIDsList = getVideoIDsList(UPLOADS, MAX_RESULTS);
+        String videoIds = org.apache.commons.lang3.StringUtils.join(videoIDsList, ",");
+        videosListRequest.setKey(API_KEY);
+        videosListRequest.setId(videoIds);
+        List<Video> videosList = videosListRequest.execute().getItems();
+        return videosList;
+    }
+
+    public List<Video> getTrendingVideosList() throws IOException {
+        YouTube.Videos.List videosListRequest = mService.videos().list("snippet,contentDetails,statistics");
+        ArrayList<String> videoIDsList = getVideoIDsList(TRENDING, 3);
         String videoIds = org.apache.commons.lang3.StringUtils.join(videoIDsList, ",");
         videosListRequest.setKey(API_KEY);
         videosListRequest.setId(videoIds);
@@ -159,14 +205,14 @@ public class YouTubeHelper {
         return getPlaylistItemsList("UUKLN9wGq6WfD2JgJk6P7ODQ");
     }
 
-    public List<PlaylistItem> getUploadsItemsList(long limit) throws IOException {
-//        return getPlaylistItemsList("PLJvP8jNh41cgNyKbY43DrwERzCJeDZwtB", 5l);
-        return getPlaylistItemsList("UU1Z7TQ9jXXiX-k3YanWLUUg", limit);
-    }
+//    public List<PlaylistItem> getUploadsItemsList(long limit) throws IOException {
+////        return getPlaylistItemsList("PLJvP8jNh41cgNyKbY43DrwERzCJeDZwtB", 5l);
+//        return getPlaylistItemsList("UU1Z7TQ9jXXiX-k3YanWLUUg", limit);
+//    }
 
-    public ArrayList<String> getVideoIDsList() throws IOException {
+    public ArrayList<String> getVideoIDsList(String playlistId, int maxResults) throws IOException {
         ArrayList<String> videoIdsList = new ArrayList<String>();
-        List<PlaylistItem> videosList = getUploadsItemsList();
+        List<PlaylistItem> videosList = getPlaylistItemsList(playlistId, maxResults);
         for (PlaylistItem video : videosList) {
             videoIdsList.add(video.getSnippet().getResourceId().getVideoId());
         }

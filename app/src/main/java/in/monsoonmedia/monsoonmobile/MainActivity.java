@@ -15,13 +15,12 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.GridView;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -30,7 +29,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
-import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
@@ -42,7 +40,6 @@ import com.google.api.services.youtube.model.SearchResult;
 import com.google.api.services.youtube.model.Video;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,11 +65,14 @@ public class MainActivity extends FragmentActivity
     private YouTubeHelper youTubeHelper;
     private SearchResult recentVideo;
     private List<Playlist> categoryPlaylistsList;
+    private List<Video> trendingVideosList;
     ProgressDialog progressDialog;
     ViewPager viewPagerContent;
     VideoPageAdapter videoPageAdapter;
     List<Video> videosList;
-    GridView gridViewCategories;
+    List<PlaylistItem> playlistItemsList;
+    GridViewScrollable gridViewCategories;
+    ListView listViewTrendingVideos;
     private GoogleApiClient googleApiClient;
 
     /**
@@ -86,7 +86,14 @@ public class MainActivity extends FragmentActivity
         setContentView(R.layout.activity_main);
 
 //        listViewCategories = (ListView) findViewById(R.id.listViewCategories);
-        gridViewCategories = (GridView) findViewById(R.id.gridViewCategories);
+        gridViewCategories = (GridViewScrollable) findViewById(R.id.gridViewCategories);
+        listViewTrendingVideos = (ListView) findViewById(R.id.listViewTrendingVideos);
+//        gridViewCategories.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                return event.getAction() == MotionEvent.ACTION_MOVE;
+//            }
+//        });
         viewPagerContent = (ViewPager) findViewById(R.id.viewPagerContent);
         viewPagerContent.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -116,7 +123,7 @@ public class MainActivity extends FragmentActivity
 //        });
         init();
         signIn();
-//        new GetThumbnailListTask().execute();
+//        new LoadCategoryThumbnailsTask().execute();
         mProgress = new ProgressDialog(this);
         mProgress.setMessage("Calling YouTube Data API ...");
         progressDialog = new ProgressDialog(this);
@@ -131,12 +138,12 @@ public class MainActivity extends FragmentActivity
 
     }
 
-    private class GetThumbnailListTask extends AsyncTask {
+    private class LoadCategoryThumbnailsTask extends AsyncTask {
 
         @Override
         protected Object doInBackground(Object[] params) {
             try {
-                categoryPlaylistsList = youTubeHelper.getCategoryPlayListsList();
+                categoryPlaylistsList = youTubeHelper.getCategoryPlaylistsList();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -146,6 +153,46 @@ public class MainActivity extends FragmentActivity
         @Override
         protected void onPostExecute(Object o) {
             gridViewCategories.setAdapter(new CategoryListAdapter(MainActivity.this, R.layout.item_category, categoryPlaylistsList));
+            Helper.setGridViewSize(gridViewCategories);
+            gridViewCategories.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String categoryPlaylistId = categoryPlaylistsList.get(position).getId();
+                    Intent intent = new Intent(MainActivity.this, CategoryActivity.class);
+                    intent.putExtra("categoryPlaylistId", categoryPlaylistId);
+                    startActivity(intent);
+                }
+            });
+        }
+    }
+
+    private class LoadTrendingThumbnailsTask extends AsyncTask {
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+            try {
+                trendingVideosList = youTubeHelper.getTrendingVideosList();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            listViewTrendingVideos.setAdapter(new TrendingVideosAdapter(MainActivity.this, R.layout.item_trending, trendingVideosList));
+            Helper.setListViewSize(listViewTrendingVideos);
+            listViewTrendingVideos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Video currentVideo = trendingVideosList.get(position);
+                    Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
+                    intent.putExtra("videoId", currentVideo.getId());
+                    intent.putExtra("videoTitle", currentVideo.getSnippet().getTitle());
+                    intent.putExtra("videoDescription", currentVideo.getSnippet().getDescription());
+                    startActivity(intent);
+                }
+            });
         }
     }
 
@@ -277,8 +324,9 @@ public class MainActivity extends FragmentActivity
                     mCredential.setSelectedAccount(googleSignInAccount.getAccount());
                     youTubeHelper = YouTubeHelper.getInstance(mCredential);
 
-                    new GetThumbnailListTask().execute();
                     new GetVideosListTask().execute();
+                    new LoadCategoryThumbnailsTask().execute();
+                    new LoadTrendingThumbnailsTask().execute();
                 }
 
 
@@ -388,24 +436,24 @@ public class MainActivity extends FragmentActivity
     }
 
 
-    public class GetVideosListTask extends AsyncTask<Void, Void, List<Video>> {
+    public class GetVideosListTask extends AsyncTask<Void, Void, List<PlaylistItem>> {
 
         @Override
-        protected List<Video> doInBackground(Void... params) {
+        protected List<PlaylistItem> doInBackground(Void... params) {
 //            videosList = null;
             try {
-                videosList = youTubeHelper.getVideosList();
+                playlistItemsList = youTubeHelper.getPlaylistItemsList(YouTubeHelper.UPLOADS);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return videosList;
+            return playlistItemsList;
         }
 
         @Override
-        protected void onPostExecute(List<Video> videosList) {
-            super.onPostExecute(videosList);
-            videoPageAdapter = new VideoPageAdapter(getFragmentManager(), videosList);
-            Toast.makeText(MainActivity.this, "Size: " + videosList.size(), Toast.LENGTH_SHORT).show();
+        protected void onPostExecute(List<PlaylistItem> playlistItemsList) {
+            super.onPostExecute(playlistItemsList);
+            videoPageAdapter = new VideoPageAdapter(getFragmentManager(), playlistItemsList, viewPagerContent);
+//            Toast.makeText(MainActivity.this, "Size: " + videosList.size(), Toast.LENGTH_SHORT).show();
             viewPagerContent.setAdapter(videoPageAdapter);
         }
     }

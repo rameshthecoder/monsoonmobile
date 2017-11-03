@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,7 +38,7 @@ public class CategoryListAdapter extends ArrayAdapter {
         categoryTitlesList.add("Movies");
         categoryTitlesList.add("Art & Literature");
         categoryTitlesList.add("Interviews");
-        categoryTitlesList.add("Live & Guidance");
+        categoryTitlesList.add("Life & Guidance");
         categoryTitlesList.add("Talk Serious");
         categoryTitlesList.add("Fun, Food & Travel");
 
