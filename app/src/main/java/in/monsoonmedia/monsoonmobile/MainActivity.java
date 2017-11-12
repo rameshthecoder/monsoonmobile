@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -27,6 +28,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
@@ -61,7 +63,7 @@ public class MainActivity extends FragmentActivity
 
     private static final String BUTTON_TEXT = "Call YouTube Data API";
     private static final String PREF_ACCOUNT_NAME = "accountName";
-    private static final String[] SCOPES = {YouTubeScopes.YOUTUBE};
+    private static final String[] SCOPES = {YouTubeScopes.YOUTUBE_FORCE_SSL};
     private YouTubeHelper youTubeHelper;
     private SearchResult recentVideo;
     private List<Playlist> categoryPlaylistsList;
@@ -71,7 +73,7 @@ public class MainActivity extends FragmentActivity
     VideoPageAdapter videoPageAdapter;
     List<Video> videosList;
     List<PlaylistItem> playlistItemsList;
-    GridViewScrollable gridViewCategories;
+    GridView gridViewCategories;
     ListView listViewTrendingVideos;
     private GoogleApiClient googleApiClient;
 
@@ -86,7 +88,7 @@ public class MainActivity extends FragmentActivity
         setContentView(R.layout.activity_main);
 
 //        listViewCategories = (ListView) findViewById(R.id.listViewCategories);
-        gridViewCategories = (GridViewScrollable) findViewById(R.id.gridViewCategories);
+        gridViewCategories = (GridView) findViewById(R.id.gridViewCategories);
         listViewTrendingVideos = (ListView) findViewById(R.id.listViewTrendingVideos);
 //        gridViewCategories.setOnTouchListener(new View.OnTouchListener() {
 //            @Override
@@ -103,6 +105,7 @@ public class MainActivity extends FragmentActivity
 
             @Override
             public void onPageSelected(int position) {
+
             }
 
             @Override
@@ -152,15 +155,21 @@ public class MainActivity extends FragmentActivity
 
         @Override
         protected void onPostExecute(Object o) {
-            gridViewCategories.setAdapter(new CategoryListAdapter(MainActivity.this, R.layout.item_category, categoryPlaylistsList));
+            final CategoryListAdapter categoryListAdapter = new CategoryListAdapter(MainActivity.this, R.layout.item_category, categoryPlaylistsList);
+            gridViewCategories.setAdapter(categoryListAdapter);
             Helper.setGridViewSize(gridViewCategories);
             gridViewCategories.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    String categoryPlaylistId = categoryPlaylistsList.get(position).getId();
-                    Intent intent = new Intent(MainActivity.this, CategoryActivity.class);
-                    intent.putExtra("categoryPlaylistId", categoryPlaylistId);
-                    startActivity(intent);
+                    if (Helper.isConnectedToInternet(MainActivity.this)) {
+                        String categoryPlaylistId = categoryPlaylistsList.get(position).getId();
+                        Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
+                        intent.putExtra("playlistId", categoryPlaylistId);
+                        intent.putExtra("playlistTitle", categoryListAdapter.getCategoryTitle(position));
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(MainActivity.this, "Please check your internet connection.", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         }
@@ -180,17 +189,23 @@ public class MainActivity extends FragmentActivity
 
         @Override
         protected void onPostExecute(Object o) {
-            listViewTrendingVideos.setAdapter(new TrendingVideosAdapter(MainActivity.this, R.layout.item_trending, trendingVideosList));
+            listViewTrendingVideos.setAdapter(new VideosListAdapter(MainActivity.this, R.layout.item_video, trendingVideosList));
             Helper.setListViewSize(listViewTrendingVideos);
             listViewTrendingVideos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Video currentVideo = trendingVideosList.get(position);
-                    Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
-                    intent.putExtra("videoId", currentVideo.getId());
-                    intent.putExtra("videoTitle", currentVideo.getSnippet().getTitle());
-                    intent.putExtra("videoDescription", currentVideo.getSnippet().getDescription());
-                    startActivity(intent);
+                    if (Helper.isConnectedToInternet(MainActivity.this)) {
+                        Video currentVideo = trendingVideosList.get(position);
+                        Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
+                        intent.putExtra("playlistId", YouTubeHelper.TRENDING);
+                        intent.putExtra("playlistTitle", "TRENDING VIDEOS");
+                        intent.putExtra("videoId", currentVideo.getId());
+                        intent.putExtra("videoTitle", currentVideo.getSnippet().getTitle());
+                        intent.putExtra("videoDescription", currentVideo.getSnippet().getDescription());
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(MainActivity.this, "Please check your internet connection.", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         }
@@ -202,11 +217,14 @@ public class MainActivity extends FragmentActivity
                 .setBackOff(new ExponentialBackOff());
 //        youTubeHelper = YouTubeHelper.getInstance(mCredential);
 
-        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().requestScopes(new Scope("https://www.googleapis.com/auth/youtube")).build();
+        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().requestScopes(new Scope("https://www.googleapis.com/auth/youtube.force-ssl")).build();
         googleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, googleSignInOptions)
                 .build();
+
+        //Select account.
+        mCredential.setSelectedAccount(googleSignInOptions.getAccount());
     }
 
     private void signIn() {
@@ -255,9 +273,9 @@ public class MainActivity extends FragmentActivity
                 getResultsFromApi();
             } else {
                 // Start a dialog from which the user can choose an account
-                startActivityForResult(
-                        mCredential.newChooseAccountIntent(),
-                        REQUEST_ACCOUNT_PICKER);
+//                startActivityForResult(
+//                        mCredential.newChooseAccountIntent(),
+//                        REQUEST_ACCOUNT_PICKER);
             }
         } else {
             // Request the GET_ACCOUNTS permission via a user dialog
@@ -319,9 +337,10 @@ public class MainActivity extends FragmentActivity
             case RC_SIGN_IN:
                 GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
                 if (result.isSuccess()) {
-                    Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show();
                     GoogleSignInAccount googleSignInAccount = result.getSignInAccount();
                     mCredential.setSelectedAccount(googleSignInAccount.getAccount());
+                    mCredential.setSelectedAccountName(googleSignInAccount.getEmail());
                     youTubeHelper = YouTubeHelper.getInstance(mCredential);
 
                     new GetVideosListTask().execute();
@@ -452,7 +471,7 @@ public class MainActivity extends FragmentActivity
         @Override
         protected void onPostExecute(List<PlaylistItem> playlistItemsList) {
             super.onPostExecute(playlistItemsList);
-            videoPageAdapter = new VideoPageAdapter(getFragmentManager(), playlistItemsList, viewPagerContent);
+            videoPageAdapter = new VideoPageAdapter(MainActivity.this, getFragmentManager(), playlistItemsList, viewPagerContent);
 //            Toast.makeText(MainActivity.this, "Size: " + videosList.size(), Toast.LENGTH_SHORT).show();
             viewPagerContent.setAdapter(videoPageAdapter);
         }

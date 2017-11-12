@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.api.client.util.DateTime;
 import com.google.api.services.youtube.model.Video;
@@ -28,13 +29,13 @@ import java.util.List;
  * Created by ramesh on 1/11/17.
  */
 
-public class TrendingVideosAdapter extends ArrayAdapter {
+public class VideosListAdapter extends ArrayAdapter {
 
     Context context;
     int resource;
     List<Video> videosList;
 
-    public TrendingVideosAdapter(@NonNull Context context, @LayoutRes int resource, List<Video> videosList) {
+    public VideosListAdapter(@NonNull Context context, @LayoutRes int resource, List<Video> videosList) {
         super(context, resource);
         this.context = context;
         this.resource = resource;
@@ -45,7 +46,7 @@ public class TrendingVideosAdapter extends ArrayAdapter {
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         Video video = videosList.get(position);
-        if(convertView == null) {
+        if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(resource, parent, false);
         }
         ImageView imageViewThumbnail = (ImageView) convertView.findViewById(R.id.imageViewThumbnail);
@@ -53,9 +54,9 @@ public class TrendingVideosAdapter extends ArrayAdapter {
         TextView textViewViewsCount = (TextView) convertView.findViewById(R.id.textViewViewsCount);
         TextView textViewPublishedAt = (TextView) convertView.findViewById(R.id.textViewPublishedAt);
         textViewTitle.setText(video.getSnippet().getTitle());
-        textViewViewsCount.setText(video.getStatistics().getViewCount().toString());
+        textViewViewsCount.setText(video.getStatistics().getViewCount().toString() + " views");
 
-        new GetImageTask(context, imageViewThumbnail, video.getSnippet().getThumbnails().getHigh().getUrl());
+        new GetImageTask(context, imageViewThumbnail, video.getSnippet().getThumbnails().getMedium().getUrl());
 
         DateTime dateTimePublishedAt = video.getSnippet().getPublishedAt();
 

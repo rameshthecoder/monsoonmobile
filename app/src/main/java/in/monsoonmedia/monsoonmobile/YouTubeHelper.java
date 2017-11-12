@@ -10,6 +10,8 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.youtube.YouTube;
+import com.google.api.services.youtube.model.CommentThread;
+import com.google.api.services.youtube.model.CommentThreadListResponse;
 import com.google.api.services.youtube.model.Playlist;
 import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.SearchResult;
@@ -30,16 +32,18 @@ import java.util.List;
 public class YouTubeHelper {
     private GoogleAccountCredential mCredential;
     private YouTube mService;
+    public static final String API_KEY = "AIzaSyAhPbII6mdo79M69BEeI69yD0gW2tiI9CY";
+    //    private static final String OAUTH_TOKEN = "418285204811-idpv7n1hpparfjjhd82ft4cm4mkhkko2.apps.googleusercontent.com";
+    private static final String OAUTH_TOKEN = "418285204811-ntghe83v2qvqi8ub2l16ib4eco8poppg.apps.googleusercontent.com";
     public static final int MAX_RESULTS = 10;
     public static final String UPLOADS = "UUKLN9wGq6WfD2JgJk6P7ODQ";
-    private static final String TRENDING = "PLngLkrCDoLukOOjr5bzs_u7Z8IkQYd5td";
-    private static final String API_KEY = "AIzaSyAhPbII6mdo79M69BEeI69yD0gW2tiI9CY";
-    private static final String ID_MOVIES = "PLngLkrCDoLumAsvgjK1Bw8rTaMMGiGTDV";
-    private static final String ID_ART_AND_LITERATURE = "PLngLkrCDoLukezJ8sOMqOFHKbP5ik6cqp";
-    private static final String ID_INTERVIEWS = "PLngLkrCDoLukSwLCgi1jzc6M9O8iDB5b5";
-    private static final String ID_LIFE_AND_GUIDANCE = "PLngLkrCDoLul-RRJ1k5JbQDwRNRiwbKFR";
-    private static final String ID_TALK_SERIOUS = "PLngLkrCDoLun6W2D6zDPiYJ0KQ6f6qEvQ";
-    private static final String ID_TRAVEL_FOOD_AND_FUN = "PLngLkrCDoLukUNpZEnb_DDruKOFSWQ4WW";
+    public static final String TRENDING = "PLngLkrCDoLukOOjr5bzs_u7Z8IkQYd5td";
+    public static final String ID_MOVIES = "PLngLkrCDoLumAsvgjK1Bw8rTaMMGiGTDV";
+    public static final String ID_ART_AND_LITERATURE = "PLngLkrCDoLukezJ8sOMqOFHKbP5ik6cqp";
+    public static final String ID_INTERVIEWS = "PLngLkrCDoLukSwLCgi1jzc6M9O8iDB5b5";
+    public static final String ID_LIFE_AND_GUIDANCE = "PLngLkrCDoLul-RRJ1k5JbQDwRNRiwbKFR";
+    public static final String ID_TALK_SERIOUS = "PLngLkrCDoLun6W2D6zDPiYJ0KQ6f6qEvQ";
+    public static final String ID_FUN_FOOD_AND_TRAVEL = "PLngLkrCDoLukUNpZEnb_DDruKOFSWQ4WW";
     static final String LIKE = "like";
     static final String DISLIKE = "dislike";
     private static YouTubeHelper youTubeHelper;
@@ -77,6 +81,15 @@ public class YouTubeHelper {
                 .build();
     }
 
+    public List<CommentThread> getCommentThreadsList(String videoId) throws IOException {
+        YouTube.CommentThreads.List commentThreadsListRequest = mService.commentThreads().list("snippet");
+        commentThreadsListRequest.setVideoId(videoId);
+        commentThreadsListRequest.setKey(API_KEY);
+        commentThreadsListRequest.setMaxResults(5l);
+        List<CommentThread> result = commentThreadsListRequest.execute().getItems();
+        return result;
+    }
+
     public List<Playlist> getCategoryPlaylistsList() throws IOException {
         ArrayList<String> playlistIdsList = new ArrayList<String>();
         playlistIdsList.add(0, ID_MOVIES);
@@ -84,19 +97,19 @@ public class YouTubeHelper {
         playlistIdsList.add(2, ID_INTERVIEWS);
         playlistIdsList.add(3, ID_LIFE_AND_GUIDANCE);
         playlistIdsList.add(4, ID_TALK_SERIOUS);
-        playlistIdsList.add(5, ID_TRAVEL_FOOD_AND_FUN);
+        playlistIdsList.add(5, ID_FUN_FOOD_AND_TRAVEL);
 
-        YouTube.Playlists.List playlistListRequest = mService.playlists().list("snippet");
-        playlistListRequest.setKey(API_KEY);
+        YouTube.Playlists.List playlistsListRequest = mService.playlists().list("snippet");
+        playlistsListRequest.setKey(API_KEY);
         String playlistIds = org.apache.commons.lang3.StringUtils.join(playlistIdsList.toArray(), ",");
-        playlistListRequest.setId(playlistIds);
-        return playlistListRequest.execute().getItems();
+        playlistsListRequest.setId(playlistIds);
+        return playlistsListRequest.execute().getItems();
     }
 
     public List<Video> getCategoryVideosList(String categoryPlaylistId) throws IOException {
         List<PlaylistItem> playlistItemsList = getPlaylistItemsList(categoryPlaylistId);
         ArrayList<String> categoryVideoIdsList = new ArrayList<String>();
-        for(PlaylistItem playlistItem : playlistItemsList) {
+        for (PlaylistItem playlistItem : playlistItemsList) {
             categoryVideoIdsList.add(playlistItem.getSnippet().getResourceId().getVideoId());
         }
 
@@ -182,6 +195,17 @@ public class YouTubeHelper {
     public List<Video> getVideosList() throws IOException {
         YouTube.Videos.List videosListRequest = mService.videos().list("snippet,contentDetails,statistics");
         ArrayList<String> videoIDsList = getVideoIDsList(UPLOADS, MAX_RESULTS);
+        String videoIds = org.apache.commons.lang3.StringUtils.join(videoIDsList, ",");
+        videosListRequest.setKey(API_KEY);
+        videosListRequest.setId(videoIds);
+        List<Video> videosList = videosListRequest.execute().getItems();
+        return videosList;
+    }
+
+    public List<Video> getRemainingVideosList(String playlistId, String currentVideoId) throws IOException {
+        YouTube.Videos.List videosListRequest = mService.videos().list("snippet,contentDetails,statistics");
+        ArrayList<String> videoIDsList = getVideoIDsList(playlistId, 6);
+        videoIDsList.remove(currentVideoId);
         String videoIds = org.apache.commons.lang3.StringUtils.join(videoIDsList, ",");
         videosListRequest.setKey(API_KEY);
         videosListRequest.setId(videoIds);

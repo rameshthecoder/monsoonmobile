@@ -50,6 +50,10 @@ public class CategoryListAdapter extends ArrayAdapter {
         colors.add("#99CC33");
     }
 
+    public String getCategoryTitle(int position) {
+        return categoryTitlesList.get(position);
+    }
+
     @Override
     public int getCount() {
         return categoryTitlesList.size();
@@ -66,7 +70,8 @@ public class CategoryListAdapter extends ArrayAdapter {
 
         textViewCategoryTitle.setText(categoryTitlesList.get(position));
         textViewCategoryTitle.setBackgroundColor(Color.parseColor(colors.get(position)));
-        String url = categoryPlaylistsList.get(position).getSnippet().getThumbnails().getHigh().getUrl();
+        String url = categoryPlaylistsList.get(position).getSnippet().getThumbnails().getMedium().getUrl();
+        Log.d("Url: ", url);
         new GetImageTask(context, imageViewCategoryThumbnail, url).execute();
         return convertView;
     }

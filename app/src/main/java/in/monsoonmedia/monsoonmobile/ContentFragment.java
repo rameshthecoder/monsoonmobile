@@ -1,6 +1,7 @@
 package in.monsoonmedia.monsoonmobile;
 
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -36,57 +37,51 @@ import java.util.List;
  * Created by ramesh on 27/9/17.
  */
 
-public class ContentFragment extends Fragment implements YouTubePlayer.OnInitializedListener {
+public class ContentFragment extends Fragment {
 
     private static final int RECOVERY_REQUEST = 1;
     private static final String API_KEY = "AIzaSyAhPbII6mdo79M69BEeI69yD0gW2tiI9CY";
-    private Video video;
     private PlaylistItem playlistItem;
     private ViewPager viewPager;
-    private YouTubePlayer youTubePlayer;
     private YouTubePlayerFragment youTubePlayerFragment;
+    private ImageButton imageButtonPrevious;
+    private ImageButton imageButtonNext;
+    private ImageView imageViewThumbnail;
+    private int currentPosition;
+    private int lastPosition;
+    private Context context;
+    private static ContentFragment contentFragment;
 
-//    public static ContentFragment getInstance(Video video, ViewPager viewPager) {
-//        ContentFragment contentFragment = new ContentFragment();
-//        contentFragment.init();
-//        contentFragment.setVideo(video);
-//        contentFragment.setViewPager(viewPager);
-////        Bundle args = new Bundle();
-////        args.putInt("position", position);
-////        contentFragment.setArguments(args);
+
+    public static ContentFragment getInstance(Context context, PlaylistItem playlistItem, int currentPosition, int lastPosition, ViewPager viewPager) {
+//        if (contentFragment == null) {
+//            contentFragment = new ContentFragment();
+//            contentFragment.init(playlistItem, currentPosition, lastPosition);
+//        } else {
+//            contentFragment.setPlaylistItem(playlistItem);
+//        }
 //        return contentFragment;
-//    }
-
-    public static ContentFragment getInstance(PlaylistItem playlistItem, ViewPager viewPager) {
         ContentFragment contentFragment = new ContentFragment();
-        contentFragment.init();
-        contentFragment.setPlaylistItem(playlistItem);
-        contentFragment.setViewPager(viewPager);
-//        Bundle args = new Bundle();
-//        args.putInt("position", position);
-//        contentFragment.setArguments(args);
+        contentFragment.init(context, playlistItem, currentPosition, lastPosition, viewPager);
         return contentFragment;
-    }
-
-    private void init() {
-        youTubePlayerFragment = YouTubePlayerFragment.newInstance();
-    }
-
-    private void setVideo(Video video) {
-        this.video = video;
     }
 
     private void setPlaylistItem(PlaylistItem playlistItem) {
         this.playlistItem = playlistItem;
     }
-    private void setViewPager(ViewPager viewPager) {
+
+    private void init(Context context, PlaylistItem playlistItem, int currentPosition, int lastPosition, ViewPager viewPager) {
+        youTubePlayerFragment = YouTubePlayerFragment.newInstance();
+        this.playlistItem = playlistItem;
+        this.currentPosition = currentPosition;
+        this.lastPosition = lastPosition;
         this.viewPager = viewPager;
+        this.context = context;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        position = getArguments().getInt("position");
     }
 
     @Nullable
@@ -95,26 +90,30 @@ public class ContentFragment extends Fragment implements YouTubePlayer.OnInitial
         View view = inflater.inflate(R.layout.page_fragment, container, false);
         TextView textViewTitle = (TextView) view.findViewById(R.id.textViewTitle);
         TextView textViewDescription = (TextView) view.findViewById(R.id.textViewDescription);
-        ImageButton imageButtonPrevious = (ImageButton) view.findViewById(R.id.imageButtonPrevious);
-        ImageButton imageButtonNext = (ImageButton) view.findViewById(R.id.imageButtonNext);
-//        TextView textViewLikesCount = (TextView) view.findViewById(R.id.textViewLikesCount);
-//        TextView textViewDislikesCount = (TextView) view.findViewById(R.id.textViewDislikesCount);
-        final ImageView imageViewThumbnail = (ImageView) view.findViewById(R.id.imageViewThumbnail);
+        imageButtonPrevious = (ImageButton) view.findViewById(R.id.imageButtonPrevious);
+        imageButtonNext = (ImageButton) view.findViewById(R.id.imageButtonNext);
+        imageViewThumbnail = (ImageView) view.findViewById(R.id.imageViewThumbnail);
         imageViewThumbnail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getActivity().getBaseContext(), PlayerActivity.class);
-                intent.putExtra("videoId", playlistItem.getSnippet().getResourceId().getVideoId());
-                intent.putExtra("videoTitle", playlistItem.getSnippet().getTitle());
-                intent.putExtra("videoDescription", playlistItem.getSnippet().getDescription());
-                startActivity(intent);
+                if (Helper.isConnectedToInternet(context)) {
+                    Intent intent = new Intent(getActivity().getBaseContext(), PlayerActivity.class);
+                    intent.putExtra("playlistId", YouTubeHelper.UPLOADS);
+                    intent.putExtra("playlistTitle", "Uploads");
+                    intent.putExtra("videoId", playlistItem.getSnippet().getResourceId().getVideoId());
+                    intent.putExtra("videoTitle", playlistItem.getSnippet().getTitle());
+                    intent.putExtra("videoDescription", playlistItem.getSnippet().getDescription());
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(context, "Please check your internet connection.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         imageButtonPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(viewPager.getCurrentItem() != 0) {
+                if (viewPager.getCurrentItem() != 0) {
                     viewPager.setCurrentItem(viewPager.getCurrentItem() - 1);
                 }
             }
@@ -123,77 +122,25 @@ public class ContentFragment extends Fragment implements YouTubePlayer.OnInitial
         imageButtonNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(viewPager.getCurrentItem() != YouTubeHelper.MAX_RESULTS) {
+                if (viewPager.getCurrentItem() != YouTubeHelper.MAX_RESULTS) {
                     viewPager.setCurrentItem(viewPager.getCurrentItem() + 1);
                 }
             }
         });
-//        YouTubePlayerView youTubePlayerView = (YouTubePlayerView) view.findViewById(R.id.youtube_view);
+
+        if (currentPosition == 0) {
+            imageButtonPrevious.setVisibility(View.INVISIBLE);
+        }
+
+        if (currentPosition == lastPosition) {
+            imageButtonNext.setVisibility(View.INVISIBLE);
+        }
+
         textViewTitle.setText(playlistItem.getSnippet().getTitle());
         textViewDescription.setText(playlistItem.getSnippet().getDescription());
-//        textViewLikesCount.setText(video.getStatistics().getLikeCount().toString());
-//        textViewDislikesCount.setText(video.getStatistics().getDislikeCount().toString());
-        String thumbnailUrl = playlistItem.getSnippet().getThumbnails().getHigh().getUrl().toString();
+        String thumbnailUrl = playlistItem.getSnippet().getThumbnails().getMedium().getUrl().toString();
         new GetImageTask(this.getActivity().getBaseContext(), imageViewThumbnail, thumbnailUrl).execute();
-//
-//        android.app.FragmentManager fragmentManager = getFragmentManager();
-//
-//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//        fragmentTransaction.replace(R.id.frame_fragment, youTubePlayerFragment);
-//        fragmentTransaction.commit();
+
         return view;
     }
-
-
-//    public void initializeYouTubeFragment(){
-//        youTubePlayerFragment.initialize(API_KEY, this);
-//    }
-
-    @Override
-    public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
-        if(!b) {
-            this.youTubePlayer = youTubePlayer;
-            youTubePlayer.cueVideo(video.getId());
-        }
-    }
-
-    @Override
-    public void onInitializationFailure(YouTubePlayer.Provider provider, YouTubeInitializationResult youTubeInitializationResult) {
-        if(youTubeInitializationResult.isUserRecoverableError()) {
-            youTubeInitializationResult.getErrorDialog(getActivity(), RECOVERY_REQUEST);
-        } else {
-            String error = youTubeInitializationResult.toString();
-            Toast.makeText(getActivity(), error, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-//    private class GetImageTask extends AsyncTask<Void, Void, String> {
-//
-//        Context context;
-//        ImageView imageViewThumbnail;
-//
-//        GetImageTask(Context context, ImageView imageViewThumbnail) {
-//            this.context = context;
-//            this.imageViewThumbnail = imageViewThumbnail;
-//        }
-//
-//        @Override
-//        protected void onPreExecute() {
-//
-//        }
-//
-//        @Override
-//        protected String doInBackground(Void... params) {
-//            String thumbnailUrl = null;
-//            thumbnailUrl = video.getSnippet().getThumbnails().getHigh().getUrl();
-//            Log.d("Thumbnail URL: ", thumbnailUrl);
-//            return thumbnailUrl;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(String thumbnailUrl) {
-//            Glide.with(context).load(thumbnailUrl).into(imageViewThumbnail);
-//
-//        }
-//    }
 }

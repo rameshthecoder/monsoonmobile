@@ -17,10 +17,10 @@
             android:id="@+id/textViewLocation"
             android:layout_width="100dp"
             android:layout_height="match_parent"
-            android:ems="10"
             android:gravity="center_vertical"
-            android:padding="2dp"
+            android:layout_marginLeft="2dp"
             android:text="HOME"
+            android:textSize="12sp"
             android:textColor="#ae8ea6" />
 
 
@@ -74,7 +74,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="450dp" />
 
-            <in.monsoonmedia.monsoonmobile.GridViewScrollable
+            <GridView
                 android:id="@+id/gridViewCategories"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -91,6 +91,12 @@
                 android:id="@+id/listViewTrendingVideos"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
+
+            <ImageView
+                android:id="@+id/footer"
+                android:layout_width="match_parent"
+                android:layout_height="133.3dp"
+                android:src="@drawable/bg_footer" />
         </LinearLayout>
     </ScrollView>
 

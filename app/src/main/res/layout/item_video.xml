@@ -12,10 +12,19 @@
         android:layout_marginBottom="10dp"
         android:orientation="horizontal">
 
+
+        <!--android:layout_width="80dp"-->
+        <!--android:layout_height="60dp"-->
+
+
+        <!--android:layout_width="300px"-->
+        <!--android:layout_height="168.75px"-->
+
         <ImageView
-            android:id="@+id/imageViewThumbnail"
-            android:layout_width="80dp"
+            android:adjustViewBounds="true"
             android:layout_height="60dp"
+            android:layout_width="wrap_content"
+            android:id="@+id/imageViewThumbnail"
             android:layout_marginLeft="10dp"
             android:background="#000000" />
 
@@ -34,6 +43,7 @@
                 android:layout_height="0px"
                 android:maxLines="2"
                 android:minLines="2"
+                android:textColor="#4871b1"
                 android:scrollHorizontally="false" />
             <LinearLayout
                 android:orientation="horizontal"
@@ -45,6 +55,7 @@
                     android:id="@+id/textViewViewsCount"
                     android:text="718 views"
                     android:textSize="10sp"
+                    android:textColor="#79767d"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
@@ -52,6 +63,7 @@
                     android:id="@+id/textViewPublishedAt"
                     android:text="718 views"
                     android:textSize="10sp"
+                    android:textColor="#79767d"
                     android:layout_marginLeft="10dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />

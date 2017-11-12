@@ -50,7 +50,7 @@ public class CategoryActivity extends FragmentActivity {
         @Override
         protected void onPostExecute(List<PlaylistItem> categoryPlaylistItemsList) {
             super.onPostExecute(categoryPlaylistItemsList);
-            videoPageAdapter = new VideoPageAdapter(CategoryActivity.this.getFragmentManager(), categoryPlaylistItemsList, viewPagerCategoryContent);
+            videoPageAdapter = new VideoPageAdapter(CategoryActivity.this, CategoryActivity.this.getFragmentManager(), categoryPlaylistItemsList, viewPagerCategoryContent);
 //            Toast.makeText(CategoryActivity.this, "Size: " + categoryVideosList.size(), Toast.LENGTH_SHORT).show();
             viewPagerCategoryContent.setAdapter(videoPageAdapter);
         }
