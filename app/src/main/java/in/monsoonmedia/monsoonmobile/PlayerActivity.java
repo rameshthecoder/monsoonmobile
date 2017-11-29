@@ -17,6 +17,7 @@ import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
+import com.google.api.services.youtube.model.CommentSnippet;
 import com.google.api.services.youtube.model.CommentThread;
 import com.google.api.services.youtube.model.PlaylistItem;
 import com.google.api.services.youtube.model.Video;
@@ -95,6 +96,18 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (youTubePlayer == null) {
+            getYouTubePlayerProvider();
+        }
+        else {
+            youTubePlayer.cueVideo(videoId);
+        }
+    }
+
     private void init() {
         youTubePlayerView.initialize(YouTubeHelper.API_KEY, this);
         new GetRatingTask().execute(videoId);
@@ -105,6 +118,9 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
 
     @Override
     public void onInitializationSuccess(YouTubePlayer.Provider provider, final YouTubePlayer youTubePlayer, boolean wasRestored) {
+
+        this.youTubePlayer = youTubePlayer;
+
         if (!wasRestored) {
             youTubePlayer.cueVideo(videoId);
 //            youTubePlayer.addFullscreenControlFlag(YouTubePlayer.FULLSCREEN_FLAG_CONTROL_ORIENTATION);
@@ -154,6 +170,8 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
             List<CommentThread> commentThreadList = null;
             try {
                 commentThreadList = YouTubeHelper.getInstance().getCommentThreadsList(videoId);
+                CommentThread item = commentThreadList.get(0);
+                item.getSnippet().getTopLevelComment().getSnippet().getAuthorDisplayName();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -162,11 +180,13 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
 
         @Override
         protected void onPostExecute(List<CommentThread> commentThreadList) {
-            ArrayList<String> commentsList = new ArrayList();
-            for (CommentThread commentThread : commentThreadList) {
-                commentsList.add(commentThread.getSnippet().getTopLevelComment().getSnippet().getTextOriginal());
-            }
-            listViewComments.setAdapter(new ArrayAdapter(PlayerActivity.this, android.R.layout.simple_list_item_1, commentsList));
+//            ArrayList<String> commentsList = new ArrayList();
+//            for (CommentThread commentThread : commentThreadList) {
+//                CommentSnippet snippet = commentThread.getSnippet().getTopLevelComment().getSnippet();
+//                commentsList.add(snippet.getTextOriginal() + " : " + snippet.getAuthorDisplayName());
+//            }
+//            listViewComments.setAdapter(new ArrayAdapter(PlayerActivity.this, android.R.layout.simple_list_item_1, commentsList));
+            listViewComments.setAdapter(new CommentsListAdapter(PlayerActivity.this, R.layout.item_comment, commentThreadList));
 //            Helper.setListViewSize(listViewComments);
         }
     }

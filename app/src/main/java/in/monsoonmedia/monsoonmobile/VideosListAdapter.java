@@ -59,19 +59,7 @@ public class VideosListAdapter extends ArrayAdapter {
         new GetImageTask(context, imageViewThumbnail, video.getSnippet().getThumbnails().getMedium().getUrl());
 
         DateTime dateTimePublishedAt = video.getSnippet().getPublishedAt();
-
-
-        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
-        SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd, yyyy");
-        String dateString = dateTimePublishedAt.toString().substring(0, 10);
-        Date date = null;
-        String publishedAt = null;
-        try {
-            date = inputFormat.parse(dateString);
-            publishedAt = outputFormat.format(date);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        String publishedAt = Helper.getReadableDateString(dateTimePublishedAt);
 
         textViewPublishedAt.setText(publishedAt);
 

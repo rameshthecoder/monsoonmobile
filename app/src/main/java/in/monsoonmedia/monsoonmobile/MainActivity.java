@@ -3,6 +3,9 @@ package in.monsoonmedia.monsoonmobile;
 import android.Manifest;
 import android.accounts.AccountManager;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -11,8 +14,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.View;
@@ -86,8 +92,8 @@ public class MainActivity extends FragmentActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 //        listViewCategories = (ListView) findViewById(R.id.listViewCategories);
+//        startService(new Intent(this, NotificationService.class));
         gridViewCategories = (GridView) findViewById(R.id.gridViewCategories);
         listViewTrendingVideos = (ListView) findViewById(R.id.listViewTrendingVideos);
 //        gridViewCategories.setOnTouchListener(new View.OnTouchListener() {
@@ -134,6 +140,23 @@ public class MainActivity extends FragmentActivity
         getResultsFromApi();
 //        listViewVideos = (ListView) findViewById(R.id.videoList);
 
+    }
+
+    public void createNotification(String videoId) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("videoId", videoId);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
+        NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.header_icon, "Action!", pendingIntent).build();
+        Notification notification = new NotificationCompat.Builder(this)
+                .setContentTitle("Notification Title!")
+                .setContentText("Text").setSmallIcon(R.drawable.header_icon)
+                .setContentIntent(pendingIntent)
+                .addAction(action)
+                .build();
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+        notificationManager.notify(0, notification);
     }
 
     @Override
@@ -346,6 +369,28 @@ public class MainActivity extends FragmentActivity
                     new GetVideosListTask().execute();
                     new LoadCategoryThumbnailsTask().execute();
                     new LoadTrendingThumbnailsTask().execute();
+                    SharedPreferences preferences = this.getSharedPreferences("monsoon_mobile_settings", Context.MODE_PRIVATE);
+                    String recentVideoId = preferences.getString("recentVideoId", null);
+                    if (recentVideoId == null) {
+                        startService(new Intent(MainActivity.this, NotificationService.class));
+                    }
+//                    new AsyncTask<Void, Void, String>() {
+//                        @Override
+//                        protected String doInBackground(Void... params) {
+//                            String recentVideoId = null;
+//                            try {
+//                                recentVideoId = YouTubeHelper.getInstance().getRecentVideoId();
+//                            } catch (IOException e) {
+//                                e.printStackTrace();
+//                            }
+//                            return recentVideoId;
+//                        }
+//
+//                        @Override
+//                        protected void onPostExecute(String result) {
+//                            Log.d("Recent: ", result);
+//                        }
+//                    }.execute();
                 }
 
 

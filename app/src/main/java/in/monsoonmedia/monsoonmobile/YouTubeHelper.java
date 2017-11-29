@@ -10,6 +10,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.youtube.YouTube;
+import com.google.api.services.youtube.model.Comment;
 import com.google.api.services.youtube.model.CommentThread;
 import com.google.api.services.youtube.model.CommentThreadListResponse;
 import com.google.api.services.youtube.model.Playlist;
@@ -36,6 +37,7 @@ public class YouTubeHelper {
     //    private static final String OAUTH_TOKEN = "418285204811-idpv7n1hpparfjjhd82ft4cm4mkhkko2.apps.googleusercontent.com";
     private static final String OAUTH_TOKEN = "418285204811-ntghe83v2qvqi8ub2l16ib4eco8poppg.apps.googleusercontent.com";
     public static final int MAX_RESULTS = 10;
+    public static final String CHANNEL_ID = "UCKLN9wGq6WfD2JgJk6P7ODQ";
     public static final String UPLOADS = "UUKLN9wGq6WfD2JgJk6P7ODQ";
     public static final String TRENDING = "PLngLkrCDoLukOOjr5bzs_u7Z8IkQYd5td";
     public static final String ID_MOVIES = "PLngLkrCDoLumAsvgjK1Bw8rTaMMGiGTDV";
@@ -84,10 +86,20 @@ public class YouTubeHelper {
     public List<CommentThread> getCommentThreadsList(String videoId) throws IOException {
         YouTube.CommentThreads.List commentThreadsListRequest = mService.commentThreads().list("snippet");
         commentThreadsListRequest.setVideoId(videoId);
+        commentThreadsListRequest.setOrder("relevance");
         commentThreadsListRequest.setKey(API_KEY);
         commentThreadsListRequest.setMaxResults(5l);
         List<CommentThread> result = commentThreadsListRequest.execute().getItems();
         return result;
+    }
+
+    public List<Comment> getCommentsList(String videoId) throws IOException {
+        YouTube.Comments.List commentsListRequest = mService.comments().list("snippet");
+        commentsListRequest.setId(videoId);
+        commentsListRequest.setKey(API_KEY);
+        commentsListRequest.setMaxResults(5l);
+        List<Comment> commentsList = commentsListRequest.execute().getItems();
+        return commentsList;
     }
 
     public List<Playlist> getCategoryPlaylistsList() throws IOException {
@@ -245,11 +257,20 @@ public class YouTubeHelper {
 
     public SearchResult getRecentVideo() throws IOException {
         YouTube.Search.List searchListRequest = mService.search().list("snippet");
-        searchListRequest.setChannelId("UC1Z7TQ9jXXiX-k3YanWLUUg");
+        searchListRequest.setChannelId(CHANNEL_ID);
         searchListRequest.setKey(API_KEY);
         searchListRequest.setOrder("date");
         searchListRequest.setMaxResults(1l);
         return searchListRequest.execute().getItems().get(0);
+    }
+
+    public String getRecentVideoId() throws IOException {
+        YouTube.Search.List searchListRequest = mService.search().list("snippet");
+        searchListRequest.setChannelId(CHANNEL_ID);
+        searchListRequest.setKey(API_KEY);
+        searchListRequest.setOrder("date");
+        searchListRequest.setMaxResults(1l);
+        return searchListRequest.execute().getItems().get(0).getId().getVideoId();
     }
 
     public List<PlaylistItem> getLatestVideos() throws IOException {
