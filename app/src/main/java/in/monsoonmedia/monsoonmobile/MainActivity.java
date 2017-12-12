@@ -2,6 +2,7 @@ package in.monsoonmedia.monsoonmobile;
 
 import android.Manifest;
 import android.accounts.AccountManager;
+import android.app.AlarmManager;
 import android.app.Dialog;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -14,6 +15,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
@@ -130,6 +132,9 @@ public class MainActivity extends FragmentActivity
 //                mCallApiButton.setEnabled(true);
 //            }
 //        });
+        if(!Helper.isConnectedToInternet(this)) {
+            Toast.makeText(MainActivity.this, "No internet connection.", Toast.LENGTH_SHORT).show();
+        }
         init();
         signIn();
 //        new LoadCategoryThumbnailsTask().execute();
@@ -372,7 +377,13 @@ public class MainActivity extends FragmentActivity
                     SharedPreferences preferences = this.getSharedPreferences("monsoon_mobile_settings", Context.MODE_PRIVATE);
                     String recentVideoId = preferences.getString("recentVideoId", null);
                     if (recentVideoId == null) {
-                        startService(new Intent(MainActivity.this, NotificationService.class));
+//                        startService(new Intent(MainActivity.this, TestService.class));
+                        long currentTimeInMillis = System.currentTimeMillis();
+//                        Toast.makeText(this, "Recent Video null!", Toast.LENGTH_SHORT).show();
+                        Intent receiverIntent = new Intent(MainActivity.this, TestReceiver.class);
+                        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, TestReceiver.REQUEST_CODE, receiverIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        AlarmManager alarmService = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+                        alarmService.setRepeating(AlarmManager.RTC_WAKEUP, currentTimeInMillis, 10000l, pendingIntent);
                     }
 //                    new AsyncTask<Void, Void, String>() {
 //                        @Override

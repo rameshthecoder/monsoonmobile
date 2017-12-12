@@ -34,8 +34,16 @@
             android:name=".Main2Activity"
             android:label="@string/title_activity_main2"
             android:theme="@style/AppTheme"></activity>
-        <service android:name=".NotificationService"
-            android:stopWithTask="false"/>
+
+        <service
+            android:name=".NotificationService" />
+
+        <service
+            android:name=".TestIntentService" />
+
+        <receiver android:name=".TestReceiver"
+            android:process=":remote"/>
+
     </application>
 
 </manifest>
