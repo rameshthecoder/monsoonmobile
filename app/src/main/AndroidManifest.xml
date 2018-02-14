@@ -17,15 +17,10 @@
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".PlayerActivity"
             android:screenOrientation="portrait" />
-
         <activity
             android:name=".CategoryActivity"
             android:label="@string/title_activity_category"
@@ -33,17 +28,21 @@
         <activity
             android:name=".Main2Activity"
             android:label="@string/title_activity_main2"
-            android:theme="@style/AppTheme"></activity>
+            android:theme="@style/AppTheme" />
 
-        <service
-            android:name=".NotificationService" />
+        <service android:name=".NotificationService" />
+        <service android:name=".TestIntentService" />
 
-        <service
-            android:name=".TestIntentService" />
+        <receiver
+            android:name=".TestReceiver"
+            android:process=":remote" />
 
-        <receiver android:name=".TestReceiver"
-            android:process=":remote"/>
-
+        <activity android:name=".SplashScreenActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

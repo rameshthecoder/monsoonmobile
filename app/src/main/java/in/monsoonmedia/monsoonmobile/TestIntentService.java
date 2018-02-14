@@ -1,6 +1,9 @@
 package in.monsoonmedia.monsoonmobile;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -20,7 +23,7 @@ public class TestIntentService extends IntentService {
     /**
      * Creates an IntentService.  Invoked by your subclass's constructor.
      *
-     * @param name Used to name the worker thread, important only for debugging.
+//     * @param name Used to name the worker thread, important only for debugging.
      */
 
     public TestIntentService() {
@@ -38,7 +41,7 @@ public class TestIntentService extends IntentService {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(), "onStartCommand!", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getApplicationContext(), "onStartCommand!", Toast.LENGTH_SHORT).show();
                 }
             });
             Log.d("onStartCommand","");
@@ -57,6 +60,20 @@ public class TestIntentService extends IntentService {
 //                Toast.makeText(getApplicationContext(), "Recent: " + recentVideoId, Toast.LENGTH_SHORT).show();
             }
             Log.d("Recent", recentVideoId);
+            showNotification();
         }
+    }
+
+    public void showNotification() {
+        Log.d("At:", "showNotification() method");
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(TestIntentService.this, (int) System.currentTimeMillis(), intent, 0);
+        Notification notification = new Notification.Builder(this)
+                .setContentTitle("New Video Uploaded!")
+                .setAutoCancel(true)
+                .setSmallIcon(R.drawable.header_icon)
+                .setContentIntent(pendingIntent).build();
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(0, notification);
     }
 }

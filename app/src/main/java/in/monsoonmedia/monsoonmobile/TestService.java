@@ -22,7 +22,7 @@ public class TestService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (Helper.isConnectedToInternet(getBaseContext())) {
-            Toast.makeText(getApplicationContext(), "onStartCommand!", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getApplicationContext(), "onStartCommand!", Toast.LENGTH_SHORT).show();
             Log.d("onStartCommand","");
             new AsyncTask<Void, Void, String>() {
                 @Override
@@ -45,9 +45,9 @@ public class TestService extends Service {
                         SharedPreferences.Editor editor = settings.edit();
                         editor.putString("recentVideoId", result);
                         editor.commit();
-                        Toast.makeText(getApplicationContext(), "Recent: " + recentVideoId, Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(getApplicationContext(), "Recent: " + recentVideoId, Toast.LENGTH_SHORT).show();
                     }
-                    Toast.makeText(getApplicationContext(), "Recent: " + recentVideoId, Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getApplicationContext(), "Recent: " + recentVideoId, Toast.LENGTH_SHORT).show();
                 }
             }.execute();
         }

@@ -383,7 +383,7 @@ public class MainActivity extends FragmentActivity
                         Intent receiverIntent = new Intent(MainActivity.this, TestReceiver.class);
                         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, TestReceiver.REQUEST_CODE, receiverIntent, PendingIntent.FLAG_UPDATE_CURRENT);
                         AlarmManager alarmService = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-                        alarmService.setRepeating(AlarmManager.RTC_WAKEUP, currentTimeInMillis, 10000l, pendingIntent);
+                        alarmService.setRepeating(AlarmManager.RTC_WAKEUP, currentTimeInMillis, 61000l, pendingIntent);
                     }
 //                    new AsyncTask<Void, Void, String>() {
 //                        @Override
